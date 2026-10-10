@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from granguard.audit import audit_primary_key
+from joinpreflight.audit import audit_primary_key
 
 
 def test_valid_primary_key():

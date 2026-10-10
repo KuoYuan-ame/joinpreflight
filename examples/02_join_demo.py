@@ -2,7 +2,7 @@
 import json
 import pandas as pd
 
-from granguard.joins import analyze_join
+from joinpreflight.joins import analyze_join
 
 
 orders = pd.DataFrame({
@@ -24,7 +24,7 @@ report = analyze_join(
 )
 
 print("=" * 60)
-print("GRAINGUARD - JOIN SAFETY REPORT")
+print("JOINPREFLIGHT - JOIN SAFETY REPORT")
 print("=" * 60)
 
 print(json.dumps(report, indent=4))

@@ -158,7 +158,7 @@ def generate_html_report(
 <meta charset="utf-8">
 <meta name="viewport"
       content="width=device-width, initial-scale=1">
-<title>GrainGuard | JOIN Safety Report</title>
+<title>JoinPreflight | JOIN Safety Report</title>
 <style>
 :root {
     font-family: -apple-system, BlinkMacSystemFont,
@@ -255,7 +255,7 @@ code { font-size: 12px; }
 <body>
 <main>
 <header>
-<h1>GrainGuard</h1>
+<h1>JoinPreflight</h1>
 <p>JOIN Safety Report · 单键 LEFT JOIN 诊断</p>
 </header>
 
@@ -317,7 +317,7 @@ code { font-size: 12px; }
 
 <footer>
 <p>
-报告由 GrainGuard 生成。
+报告由 JoinPreflight 生成。
 本版本针对 pandas 单列 LEFT JOIN，
 空键采用 pandas 的匹配语义。
 </p>

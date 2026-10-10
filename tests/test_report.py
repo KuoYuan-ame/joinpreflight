@@ -2,8 +2,8 @@
 import pandas as pd
 import pytest
 
-from granguard.joins import analyze_join, rank_risky_keys
-from granguard.report import generate_html_report
+from joinpreflight.joins import analyze_join, rank_risky_keys
+from joinpreflight.report import generate_html_report
 
 
 def test_html_report_generation(tmp_path):
@@ -30,7 +30,7 @@ def test_html_report_generation(tmp_path):
 
     content = result.read_text(encoding="utf-8")
 
-    assert "GrainGuard" in content
+    assert "JoinPreflight" in content
     assert "JOIN Safety Report" in content
     assert "符合预期" in content
     assert "100.00%" in content

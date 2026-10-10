@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from granguard.joins import (
+from joinpreflight.joins import (
     analyze_join,
     rank_risky_keys,
 )
-from granguard.report import generate_html_report
+from joinpreflight.report import generate_html_report
 
 
 def main():
@@ -53,7 +53,7 @@ def main():
     )
 
     print("=" * 60)
-    print("GRAINGUARD HTML REPORT")
+    print("JOINPREFLIGHT HTML REPORT")
     print("=" * 60)
     print(f"Original rows: {len(orders):,}")
     print(f"Predicted JOIN rows: {analysis['predicted_rows']:,}")

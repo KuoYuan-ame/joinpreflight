@@ -2,7 +2,7 @@
 import argparse
 import pandas as pd
 
-from granguard.joins import (
+from joinpreflight.joins import (
     analyze_join,
     rank_risky_keys,
 )
@@ -44,7 +44,7 @@ def main():
     )
 
     print("=" * 65)
-    print("GRAINGUARD - TOP RISKY JOIN KEYS")
+    print("JOINPREFLIGHT - TOP RISKY JOIN KEYS")
     print("=" * 65)
 
     print(f"Original orders: {len(orders):,}")

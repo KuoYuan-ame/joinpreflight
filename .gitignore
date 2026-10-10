@@ -1,33 +1,32 @@
-
-# Python virtual environments
+# Virtual environments
 .venv/
 venv/
 
-# Python caches
+# Python and tooling caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+htmlcov/
 
 # Build artifacts
 build/
 dist/
 *.egg-info/
 
-# IDE settings
+# IDE and OS
 .idea/
 .vscode/
+.DS_Store
+Thumbs.db
 
-# Environment files
-.env
-.env.*
-!.env.example
-
-# Local datasets and generated reports
+# Local data and generated reports
 data/
 reports/
 
-# Operating system files
-.DS_Store
-Thumbs.db
+# Secrets
+.env
+.env.*
+!.env.example

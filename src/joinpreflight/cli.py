@@ -28,10 +28,10 @@ def positive_integer(value: str) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the GrainGuard command-line interface."""
+    """Build the JoinPreflight command-line interface."""
 
     parser = argparse.ArgumentParser(
-        prog="granguard",
+        prog="joinpreflight",
         description=(
             "Detect JOIN cardinality and aggregation risks."
         ),
@@ -170,14 +170,14 @@ def main(argv: list[str] | None = None) -> int:
         pd.errors.ParserError,
     ) as exc:
         print(
-            f"GrainGuard error: {exc}",
+            f"JoinPreflight error: {exc}",
             file=sys.stderr,
         )
         return 2
 
     # Console report
     print("=" * 65)
-    print("GRAINGUARD - JOIN SAFETY ANALYSIS")
+    print("JOINPREFLIGHT - JOIN SAFETY ANALYSIS")
     print("=" * 65)
 
     print(

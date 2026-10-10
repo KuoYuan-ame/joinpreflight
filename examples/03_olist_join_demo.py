@@ -4,7 +4,7 @@ import json
 
 import pandas as pd
 
-from granguard.joins import analyze_join
+from joinpreflight.joins import analyze_join
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     )
 
     print("=" * 60)
-    print("GRAINGUARD - OLIST JOIN ANALYSIS")
+    print("JOINPREFLIGHT - OLIST JOIN ANALYSIS")
     print("=" * 60)
 
     report = analyze_join(

@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from granguard.joins import (
+from joinpreflight.joins import (
     analyze_join,
     rank_risky_keys,
 )

@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from granguard.joins import analyze_join
+from joinpreflight.joins import analyze_join
 
 
 def test_one_to_one():

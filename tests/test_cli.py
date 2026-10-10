@@ -3,7 +3,7 @@ import json
 
 import pandas as pd
 
-from granguard.cli import main
+from joinpreflight.cli import main
 
 
 def test_cli_generates_reports(tmp_path):

@@ -2,7 +2,7 @@
 import json
 import pandas as pd
 
-from granguard.audit import audit_primary_key
+from joinpreflight.audit import audit_primary_key
 
 
 def main():
