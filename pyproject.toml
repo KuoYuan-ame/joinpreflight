@@ -24,8 +24,19 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 
+
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "build>=1", "twine>=6"]
+dev = [
+    "pytest>=8,<10",
+    "build>=1",
+    "twine>=6",
+    "matplotlib>=3.8"
+]
+viz = [
+    "matplotlib>=3.8",
+    "scipy"
+]
+
 
 [project.scripts]
 joinpreflight = "joinpreflight.cli:main"
