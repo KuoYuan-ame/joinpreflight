@@ -1,58 +1,121 @@
+
 name: CI
 
 on:
   push:
     branches: [main]
+
   pull_request:
     branches: [main]
+
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  # ==========================================
+  # Job 1: Cross-platform automated tests
+  # ==========================================
   test:
     name: Tests / ${{ matrix.os }} / Python ${{ matrix.python-version }}
+
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.10", "3.12", "3.14"]
+        os:
+          - ubuntu-latest
+          - windows-latest
+        python-version:
+          - "3.10"
+          - "3.12"
+          - "3.14"
 
     steps:
-      - name: Checkout
+      # 1. Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v7
 
+      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          cache-dependency-path: pyproject.toml
 
-      - name: Install package and development dependencies
-        run: python -m pip install -e ".[dev]"
+      # 3. Install project and development dependencies
+      - name: Install project and development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
 
-      - name: Run tests
-        run: python -m pytest -v
+      # 4. Check dependency consistency
+      - name: Check installed dependencies
+        run: python -m pip check
 
-      - name: Verify CLI entry point
+      # 5. Run all automated tests
+      - name: Run pytest
+        run: python -m pytest -q
+
+      # 6. Verify CLI entry points
+      - name: Verify CLI entry points
         run: |
           joinpreflight --help
           joinpreflight join --help
+          joinpreflight impact --help
+          joinpreflight report --help
 
+      # 7. Verify advanced analytics modules
+      - name: Verify advanced analytics imports
+        run: |
+          python -c "import joinpreflight.bootstrap_inference"
+          python -c "import joinpreflight.segmented_analysis"
+          python -c "import joinpreflight.relationship_matrix"
+          python -c "import joinpreflight.metric_impact"
+          python -c "import joinpreflight.unified_report"
+
+      # 8. Run the public synthetic demonstration
+      - name: Run public synthetic demo
+        run: python tools/smoke_demo.py
+
+  # ==========================================
+  # Job 2: Build and validate distributions
+  # ==========================================
   build:
-    name: Build distribution
+    name: Build and validate distribution
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install build tools
-        run: python -m pip install build twine
+          cache-dependency-path: pyproject.toml
+
+      # 3. Install build tools
+      - name: Install packaging tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      # 4. Build wheel and source distribution
       - name: Build wheel and source distribution
         run: python -m build
-      - name: Validate package metadata
+
+      # 5. Validate distribution metadata
+      - name: Validate distribution metadata
         run: python -m twine check dist/*
+
+      # 6. Inspect generated files
+      - name: List distribution files
+        run: ls -lh dist/
