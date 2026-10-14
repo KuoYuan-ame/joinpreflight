@@ -52,9 +52,9 @@ viz = [
 joinpreflight = "joinpreflight.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/YOUR_GITHUB_USERNAME/joinpreflight"
-Source = "https://github.com/YOUR_GITHUB_USERNAME/joinpreflight"
-Issues = "https://github.com/YOUR_GITHUB_USERNAME/joinpreflight/issues"
+Homepage = "https://github.com/KuoYuan-ame/joinpreflight"
+Source = "https://github.com/KuoYuan-ame/joinpreflight"
+Issues = "https://github.com/KuoYuan-ame/joinpreflight/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
