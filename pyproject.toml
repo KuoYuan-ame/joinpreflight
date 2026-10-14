@@ -1,22 +1,30 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
+
 
 [project]
 name = "joinpreflight"
 version = "0.1.0"
-description = "Preflight diagnostics for pandas JOIN cardinality and row expansion"
+description = "JOIN cardinality diagnostics, aggregation risk analysis, and exploratory statistical tools"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+
 dependencies = [
     "pandas>=2.0,<4",
+    "numpy>=1.24",
+    "matplotlib>=3.8",
+    "scipy>=1.11,<2",
 ]
+
+
 keywords = ["data-quality", "pandas", "joins", "data-engineering", "cardinality"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.12",
@@ -25,17 +33,19 @@ classifiers = [
 ]
 
 
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8,<10",
     "build>=1",
     "twine>=6",
-    "matplotlib>=3.8"
 ]
+
 viz = [
     "matplotlib>=3.8",
-    "scipy"
+    "scipy>=1.11,<2",
 ]
+
 
 
 [project.scripts]
