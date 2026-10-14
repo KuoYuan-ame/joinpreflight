@@ -1,165 +1,166 @@
 # JoinPreflight
 
-**Inspect pandas JOIN cardinality before materializing the joined table.**
+**Inspect JOIN cardinality before you aggregate. Quantify how a valid JOIN can distort business metrics.**
 
-JoinPreflight is a lightweight Python CLI and library for checking key uniqueness, predicting JOIN output row counts, identifying possible duplication of left-table metrics, and producing an offline HTML diagnostic report.
+JoinPreflight is an early-stage Python toolkit for CSV JOIN diagnostics, modeled post-JOIN payment overcount, and reproducible exploratory analysis. It offers a command-line interface for core diagnostics and optional Python examples for advanced relationship matrices, segmented analysis, and bootstrap uncertainty estimation.
 
-> **Status:** Early-stage v0.1.0 candidate. Designed for single-column `LEFT JOIN` analysis on CSV files. The release has not yet been published to PyPI.
+> **Release candidate — not yet a published package.** This README documents the current development capabilities. Check CI, installation, and release hygiene before tagging a version. The examples model the consequences of an **incorrect aggregation**; they do not assert errors in Olist's original transactions or recognized financial revenue.
 
-## Why this project?
+## Results at a glance
 
-A join can be structurally valid and still make downstream metrics misleading. For example, joining an order-level table to an order-item-level table duplicates the order's amount across item rows. Summing that amount after the join overstates revenue.
+The figures below were generated using the public [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce). They are **not** derived from the small synthetic fixture.
 
-JoinPreflight makes these risks visible before you materialize a potentially large joined table.
+| Diagnostic | Olist result |
+|:--|--:|
+| Order rows | 99,441 |
+| Item rows | 112,650 |
+| Expected / actual cardinality | 1:N / 1:N |
+| Predicted LEFT JOIN output | 113,425 rows |
+| Extra left-side rows | 13,984 (+14.06%) |
+| Correct recorded order-level payment SUM | BRL 16,008,872.12 |
+| Hypothetical naive JOIN-then-SUM | BRL 20,470,726.66 |
+| **Modeled payment overcount** | **BRL 4,461,854.54 (+27.87%)** |
 
-## Features
+### Cardinality and metric impact
 
-- **Primary-key audit:** count missing keys and extra duplicate non-null keys (`audit_primary_key`).
-- **Cardinality analysis:** determine observed `1:1`, `1:N`, `N:1`, or `N:N` relationships and check expected constraints.
-- **Row-count prediction:** estimate `INNER`, `LEFT`, `RIGHT`, and `OUTER` join sizes from key-frequency tables without creating the full join result (Python API).
-- **Left-side metric duplication warning:** identify when joined rows repeat records from the left table.
-- **Top expansion keys:** rank keys contributing the most additional rows to a `LEFT JOIN`.
-- **Offline HTML and JSON reports:** generate a readable report and a machine-readable summary.
-- **CLI:** analyze CSV files using a single command.
-- **Automated tests:** tests for invalid input, missing keys, null-key matching, many-to-many joins, and report generation.
+![Olist JOIN diagnostics](docs/assets/olist_join_diagnostics.png)
 
-## Installation (from source)
+![Olist modeled payment overcount](docs/assets/olist_payment_impact.png)
 
-Python **3.10+** is required. The project uses pandas; no database server is needed.
+### Advanced exploratory analysis (separate Python scripts)
+
+![Olist segmented correlation matrices](docs/assets/olist_segmented_correlations.png)
+
+![Olist nominal bootstrap forest plot](docs/assets/olist_bootstrap_forest.png)
+
+The bootstrap forest plot uses **400 stratified-by-group, within-group IID resamples** and **nominal 95% percentile intervals** for three **post-selected** correlation pairs. The intervals are exploratory, **not multiplicity-adjusted**, and assume approximately independent orders. They are not causal conclusions or financial risk estimates.
+
+## Why this matters
+
+`orders` has one row per order; `order_items` can contain several rows for the same `order_id`. A perfectly valid 1:N LEFT JOIN can repeat order-level values. Summing order-level payment totals **after** that JOIN can produce an inflated value without any invalid primary key.
+
+JoinPreflight keeps these distinct:
+
+- **Relationship validation:** expected vs observed JOIN cardinality.
+- **Size prediction:** expected output rows and duplication hot spots.
+- **Metric-grain validation:** correct order-level sum vs a hypothetical naive post-JOIN sum.
+- **Exploratory statistics:** feature-selection audit, order-segment correlations and nominal bootstrap intervals.
+
+The project currently targets **single-column LEFT JOINs** in the documented CLI paths. It is not a complete SQL parser, database-integrity checker, or causal-analysis system.
+
+## Install from source
+
+Python 3.10+ is intended; each advertised version must pass remote CI before release.
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/joinpreflight.git
-cd joinpreflight
 python -m venv .venv
+python -m pip install -e ".[dev]"
+joinpreflight --help
 ```
 
-Activate the virtual environment on Windows PowerShell:
+Windows PowerShell, without activating the environment:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+.\.venv\Scripts\joinpreflight.exe --help
 ```
 
-Or on macOS/Linux:
+**Dependencies:** pandas for core tabular logic; matplotlib for plots; SciPy for Spearman correlation paths using pandas. Make sure `pyproject.toml` actually declares all dependencies for the installed extra. Network or wheel-availability issues are environmental and must not be silently bypassed in public CI.
+
+## Quick start (no Olist download)
+
+The repository includes a tiny **synthetic fixture** under `examples/sample_data/` so you can hand-check the results:
 
 ```bash
-source .venv/bin/activate
-python -m pip install -e .
+python tools/smoke_demo.py
 ```
 
-Until an actual PyPI release is published, **do not assume `pip install joinpreflight` is available**.
+Expected fixture totals: **6 orders**, **7 item rows**, **9 LEFT JOIN output rows**, correct payment **215.00 BRL**, naive SUM **385.00 BRL**, and modeled overcount **170.00 BRL**. The smoke script uses a temporary directory and verifies both metrics and generated report outputs.
 
-## Quick start
+To keep a report (PowerShell):
 
-Suppose `orders.csv` contains one row per order and `order_items.csv` contains one row per item. Both share the `order_id` column.
+```powershell
+.\.venv\Scripts\joinpreflight.exe report `
+  --orders examples\sample_data\orders.csv `
+  --items examples\sample_data\order_items.csv `
+  --payments examples\sample_data\payments.csv `
+  --on order_id --value payment_value --expected "1:N" `
+  --currency BRL --top 10 `
+  --output reports\sample_unified.html
+Start-Process .\reports\sample_unified.html
+```
+
+Or inspect available CLI commands:
 
 ```bash
-joinpreflight join \
-  --left orders.csv \
-  --right order_items.csv \
-  --on order_id \
-  --expected '1:N' \
-  --top 10 \
-  --html reports/join_report.html \
-  --json reports/join_report.json
+joinpreflight join --help
+joinpreflight impact --help
+joinpreflight report --help
 ```
 
-On Windows PowerShell, run this on one line, or use PowerShell's backtick for line continuation. Without activation, use `.\.venv\Scripts\joinpreflight.exe`.
+## Reproduce the Olist diagnostics
 
-The CLI reports:
+Download the public Olist dataset separately and keep it **outside** the repository. On Windows PowerShell:
 
-- Actual versus expected key cardinality.
-- Original input sizes, predicted joined rows, and left-side row growth.
-- Unmatched key counts and potential duplication of left-side metrics.
-- Keys with the largest contribution to `LEFT JOIN` expansion.
-- Optional HTML and JSON output paths.
+```powershell
+$root = "C:\path\to\olist-data"
+$orders = Join-Path $root "olist_orders_dataset.csv"
+$items = Join-Path $root "olist_order_items_dataset.csv"
+$payments = Join-Path $root "olist_order_payments_dataset.csv"
 
-### Exit codes
-
-| Code | Meaning |
-| --- | --- |
-| `0` | Analysis completed; no declared relationship constraint was violated. |
-| `1` | Declared relationship constraint was violated. |
-| `2` | Input or execution error. |
-
-**A `0` exit code does not guarantee metric safety.** A valid one-to-many join can still duplicate order-level measures.
-
-## Python API
-
-```python
-import pandas as pd
-from joinpreflight.audit import audit_primary_key
-from joinpreflight.joins import analyze_join, rank_risky_keys
-from joinpreflight.report import generate_html_report
-
-orders = pd.DataFrame({
-    "order_id": ["A001", "A002", "A003"],
-    "order_amount": [100, 200, 300],
-})
-items = pd.DataFrame({
-    "order_id": ["A001", "A001", "A002"],
-    "item": ["X", "Y", "Z"],
-})
-
-key_report = audit_primary_key(orders, "order_id", "orders")
-join_report = analyze_join(orders, items, "order_id", how="left", expected="1:N")
-top_keys = rank_risky_keys(orders, items, "order_id", top_n=10)
-generate_html_report(join_report, top_keys, "reports/demo.html")
-
-print(key_report)
-print(join_report["predicted_rows"])  # 4
+.\.venv\Scripts\joinpreflight.exe report `
+  --orders $orders --items $items --payments $payments `
+  --on order_id --value payment_value --expected "1:N" `
+  --currency BRL --top 10 --output reports\olist_unified.html
 ```
 
-## Real-data validation: Olist e-commerce
+The additional analytics presently run via example scripts, **not** as registered CLI subcommands:
 
-The current prototype has been checked against the public Olist e-commerce dataset, joining orders to order items on `order_id` using `LEFT JOIN`.
+```powershell
+# Data-driven n x n relationship matrix
+.\.venv\Scripts\python.exe examples\09_adaptive_pair_matrix.py $orders $items $payments --max-features 7
 
-| Metric | Observed result |
-| --- | ---: |
-| Order rows | 99,441 |
-| Order-item rows | 112,650 |
-| Matched order-key groups | 98,666 |
-| Unmatched left rows | 775 |
-| Predicted LEFT JOIN rows | 113,425 |
-| Actual pandas LEFT JOIN rows | 113,425 |
-| Extra rows versus orders | 13,984 (14.06%) |
-| Extra rows attributable to the top 10 expansion keys | 146 (1.04% of extra rows) |
+# Single-item vs multi-item segment comparison
+.\.venv\Scripts\python.exe examples\11_segmented_order_analysis.py $orders $items $payments --output reports\olist_segmented
 
-This validates **row-count prediction on this dataset**, not correctness for every dtype, key distribution, or downstream financial metric. Olist data is not bundled with this repository.
+# Exploratory group-specific bootstrap comparison
+.\.venv\Scripts\python.exe examples\13_bootstrap_segmented.py $orders $items $payments --n-boot 400 --seed 42 --output reports\olist_bootstrap
+```
 
-## Important semantics and limitations
+Generated reports should be written under `reports/` and excluded from Git by default. Commit curated figures under `docs/assets/`, not raw Olist data.
 
-1. The **CLI currently supports only a single join key and `LEFT JOIN`**, even though `analyze_join()` can predict additional join types in the Python API.
-2. Join-key columns are loaded from CSV **as strings** to preserve identifiers such as `001`. With pandas' default CSV settings, common missing-value markers are interpreted as missing.
-3. **Null keys may match other null keys**, consistent with `pandas.merge`. This differs from ordinary SQL `NULL = NULL` behavior.
-4. An expected relationship such as `1:N` is a **uniqueness constraint** on the left side. An observed `1:1` relationship also satisfies that constraint. `N:N` places no uniqueness constraint on either side.
-5. Row expansion is **not necessarily a join error**. The correct aggregation strategy depends on the grain of each measure.
-6. This implementation counts key frequencies before joining; it still needs memory proportional to the number of distinct keys.
-7. Mixed or incompatible non-null key dtypes may cause pandas merge errors. Compound join keys, database connections, and automatic metric corrections are not yet supported.
-8. The HTML report currently summarizes `LEFT JOIN` analysis only.
+## Technical method
+
+For each order `i`, let `p_i` be the recorded order-level payment total and `n_i` the associated item-detail row count. A LEFT JOIN retains `m_i = max(n_i, 1)` rows.
+
+```text
+Correct payment SUM  = Σ p_i
+Naive post-JOIN SUM  = Σ m_i · p_i
+Modeled overcount    = Σ (m_i - 1) · p_i
+Inflation rate       = 100 · modeled overcount / correct payment SUM
+```
+
+Payment rows are aggregated to the order grain before computing the counterfactual. Missing payment records are tracked separately; absent records are not evidence of an actual zero payment. The inflation rate is undefined for a zero correct baseline.
+
+Exploratory analysis uses **Spearman rank correlation**, with auditable feature selection, optional scatter sampling for display, and pairwise non-null observations for each reported correlation. Single vs Multi segmentation uses item-detail counts, with no-item orders reported separately. Bootstrap confidence intervals use order-level resampling within these groups and are subject to IID and post-selection limitations.
 
 ## Development and testing
 
 ```bash
-python -m pip install -e ".[dev]"
-python -m pytest -v
-joinpreflight --help
+python -m pytest -q
+python tools/smoke_demo.py
+python tools/release_preflight.py --json reports/release_preflight.json
+python -m build
+python -m twine check dist/*
 ```
 
-A CI workflow runs tests across multiple Python versions. Before publishing, ensure CI and the source-distribution/wheel build both pass.
+The last known checked-in development checkpoint is local Git commit `6244786`; this document does **not** claim that GitHub CI or a public release has passed. Test counts may change as release tests are added.
 
-## Roadmap
+## Responsible interpretation
 
-- Validate non-null join key dtype compatibility and edge cases.
-- Support compound keys and explicit null-matching policies.
-- Add more informative warnings for business-metric grain mismatches.
-- Improve benchmark coverage and extend the CLI beyond `LEFT JOIN`.
-- Add screenshots, tutorials, and more representative reproducible examples.
+A valid 1:N join does not imply metric safety; a modeled overcount is **not** an observed accounting misstatement. Rank correlations are descriptive, not causal. The three bootstrap intervals on the Olist case were selected after inspecting correlations; they are not simultaneous confidence statements or corrected hypothesis tests. Repeated buyers and sellers can invalidate the independent-order sampling approximation.
 
-## Contributing
+## Contributing and license
 
-Issues, reproducible bug reports, tests, documentation improvements, and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
+Bug reports, example improvements, regression tests, and documentation updates are welcome. See `CONTRIBUTING.md` for contribution guidance. Please verify the repository's license file before public release.
