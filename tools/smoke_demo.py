@@ -11,21 +11,42 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import shutil
+import sysconfig
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "examples" / "sample_data"
 
 
+
 def cli_executable() -> Path:
-    """Prefer the CLI entry point installed alongside the current Python."""
+    """Find the CLI installed in the active Python environment."""
     name = "joinpreflight.exe" if os.name == "nt" else "joinpreflight"
-    candidate = Path(sys.executable).resolve().parent / name
-    if not candidate.is_file():
-        raise RuntimeError(
-            f"CLI entry point not found at {candidate}; install project first: "
-            'python -m pip install -e ".[dev]"'
-        )
-    return candidate
+
+    candidates = [
+        # Correct installation directory for console scripts
+        Path(sysconfig.get_path("scripts")) / name,
+
+        # Compatibility with some virtual environments
+        Path(sys.executable).resolve().parent / name,
+    ]
+
+    # Fallback: search directories on PATH
+    found = shutil.which("joinpreflight")
+    if found:
+        candidates.append(Path(found))
+
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+
+    checked = "\n".join(str(path) for path in candidates)
+    raise RuntimeError(
+        "JoinPreflight CLI entry point not found.\n"
+        f"Checked locations:\n{checked}\n"
+        'Install the project first: python -m pip install -e ".[dev]"'
+    )
+
 
 
 def main() -> int:
